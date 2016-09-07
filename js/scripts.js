@@ -64,6 +64,40 @@ function downloadHtmlLayout(){
 	});
 }
 
+/////////////////
+
+function persistLayout(){
+/* DFP
+ * convenience / indirection method
+ */
+
+console.log( "*** scripts.js / persistLayout()" );
+
+	$.ajax({
+		type: "POST",
+		url: "/build/persistLayout",
+		data: { layout: $('#download-layout').html() },
+		success: function(data) { window.location.href = '/build/persist'; }
+	});
+}
+
+function persistHtmlLayout(){
+/* DFP
+ * convenience / indirection method
+ */
+
+console.log( "*** scripts.js / persistHtmlLayout" );
+
+	$.ajax({
+		type: "POST",
+		url: "/build/persistLayout",
+		data: { layout: $('#download-layout').html() },
+		success: function(data) { window.location.href = '/build/persistdHtml'; }
+	});
+}
+
+/////////////////
+
 function undoLayout() {
 	var data = layouthistory;
 	//console.log(data);
@@ -289,6 +323,67 @@ function downloadLayoutSrc() {
 	$("#downloadModal textarea").val(formatSrc)
 	webpage = formatSrc;
 }
+/* TODO - Refactor common code
+ * saveLayoutSrc
+ * downloadLayoutSrc
+ * #download-layout = DOM data holder
+ * */
+function persistLayoutSrc() {
+
+console.log("*** scripts.js / persistLayoutSrc");
+
+	var e = "";
+	$("#download-layout").children().html($(".demo").html());
+	var t = $("#persist-layout").children();
+	t.find(".preview, .configuration, .drag, .remove").remove();
+	t.find(".lyrow").addClass("removeClean");
+	t.find(".box-element").addClass("removeClean");
+	t.find(".lyrow .lyrow .lyrow .lyrow .lyrow .removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".lyrow .lyrow .lyrow .lyrow .removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".lyrow .lyrow .lyrow .removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".lyrow .lyrow .removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".lyrow .removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".removeClean").each(function() {
+		cleanHtml(this)
+	});
+	t.find(".removeClean").remove();
+	$("#download-layout .column").removeClass("ui-sortable");
+	$("#download-layout .row-fluid").removeClass("clearfix").children().removeClass("column");
+
+	formatSrc = $.htmlClean($("#download-layout").html(), {
+		format: true,
+		allowedAttributes: [
+			["id"],
+			["class"],
+			["data-toggle"],
+			["data-target"],
+			["data-parent"],
+			["role"],
+			["data-dismiss"],
+			["aria-labelledby"],
+			["aria-hidden"],
+			["data-slide-to"],
+			["data-slide"]
+		]
+	});
+	$("#download-layout").html(formatSrc);
+	$("#persistModal textarea").empty();
+	$("#persistModal textarea").css("width","90%");
+	$("#persistModal textarea").css("height","288px");
+//	$("#persistModal textarea").css({'width:0.9,height:0.9'});
+	$("#persistModal textarea").val(formatSrc)
+	webpage = formatSrc;
+}
 
 var currentDocument = null;
 var timerSave = 1000;
@@ -331,7 +426,7 @@ $(document).ready(function() {
 	restoreData();
 	var contenthandle = CKEDITOR.replace( 'contenteditor' ,{
 		language: 'en',
-		contentsCss: ['css/bootstrap-combined.min.css'],
+		contentsCss: ['/static/BootstrapPageGenerator/css/bootstrap-combined.min.css'],
 		allowedContent: true
 	});
 	// $("body").css("min-height", $(window).height() - 50);
@@ -408,6 +503,33 @@ $(document).ready(function() {
 		downloadHtmlLayout();
 		return false
 	});
+/////////////////////
+/*
+ * DFP
+ */
+	$("[data-target=#persistModal]").click(function(e) {
+
+console.log( "*** scripts.js / [data-target=#persistModal] :: click" );
+
+		e.preventDefault();
+		persistLayoutSrc();
+	});
+	$("#perist").click(function() {
+
+console.log( "*** scripts.js / #perist :: click" );
+
+		persistLayout();
+		return false
+	});
+	$("#persisthtml").click(function() {
+
+console.log( "*** scripts.js / #persisthtml :: click" );
+
+		persistHtmlLayout();
+		return false
+	});
+/////////////////
+
 	$("#edit").click(function() {
 		$("body").removeClass("devpreview sourcepreview");
 		$("body").addClass("edit");
@@ -468,34 +590,75 @@ $(document).ready(function() {
 	}, timerSave)
 })
 
-function saveHtml()
-			{
-			webpage = '<html>\n<head>\n<script type="text/javascript" src="http://www.francescomalagrino.com/BootstrapPageGenerator/3/js/jquery-2.0.0.min.js"></script>\n<script type="text/javascript" src="http://www.francescomalagrino.com/BootstrapPageGenerator/3/js/jquery-ui"></script>\n<link href="http://www.francescomalagrino.com/BootstrapPageGenerator/3/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">\n<script type="text/javascript" src="http://www.francescomalagrino.com/BootstrapPageGenerator/3/js/bootstrap.min.js"></script>\n</head>\n<body>\n'+ webpage +'\n</body>\n</html>'
-			/* FM aka Vegetam Added the function that save the file in the directory Downloads. Work only to Chrome Firefox And IE*/
-			if (navigator.appName =="Microsoft Internet Explorer" && window.ActiveXObject)
-			{
-			var locationFile = location.href.toString();
-			var dlg = false;
-			with(document){
-			ir=createElement('iframe');
-			ir.id='ifr';
-			ir.location='about.blank';
-			ir.style.display='none';
+function saveHtml() {
+	webpage = '<html>\n<head>\n<script type="text/javascript" src="/static/BootstrapPageGenerator/css/jquery-2.0.0.min.js"></script>\n<script type="text/javascript" src="/static/BootstrapPageGenerator/js/jquery-ui"></script>\n<link href="/static/BootstrapPageGenerator/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">\n<script type="text/javascript" src="/static/BootstrapPageGenerator/js/bootstrap.min.js"></script>\n</head>\n<body>\n'
+		+ webpage + '\n</body>\n</html>'
+	/*
+	 * FM aka Vegetam Added the function that save the file in the directory
+	 * Downloads. Work only to Chrome Firefox And IE
+	 */
+			if (navigator.appName == "Microsoft Internet Explorer"
+			&& window.ActiveXObject) {
+		var locationFile = location.href.toString();
+		var dlg = false;
+		with (document) {
+			ir = createElement('iframe');
+			ir.id = 'ifr';
+			ir.location = 'about.blank';
+			ir.style.display = 'none';
 			body.appendChild(ir);
-			with(getElementById('ifr').contentWindow.document){
-			open("text/html", "replace");
-			charset = "utf-8";
-			write(webpage);
-			close();
-			document.charset = "utf-8";
-			dlg = execCommand('SaveAs', false, locationFile+"webpage.html");
+			with (getElementById('ifr').contentWindow.document) {
+				open("text/html", "replace");
+				charset = "utf-8";
+				write(webpage);
+				close();
+				document.charset = "utf-8";
+				dlg = execCommand('SaveAs', false, locationFile
+						+ "webpage.html");
 			}
-    return dlg;
-			}
-			}
-			else{
-			webpage = webpage;
-			var blob = new Blob([webpage], {type: "text/html;charset=utf-8"});
-			saveAs(blob, "webpage.html");
+			return dlg;
 		}
+	} else {
+		webpage = webpage;
+		var blob = new Blob([ webpage ], {
+			type : "text/html;charset=utf-8"
+		});
+		saveAs(blob, "webpage.html");
+	}
+}
+function saveToCMS() {
+	webpage = '<html>\n<head>\n<script type="text/javascript" src="/static/BootstrapPageGenerator/css/jquery-2.0.0.min.js"></script>\n<script type="text/javascript" src="/static/BootstrapPageGenerator/js/jquery-ui"></script>\n<link href="/static/BootstrapPageGenerator/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">\n<script type="text/javascript" src="/static/BootstrapPageGenerator/js/bootstrap.min.js"></script>\n</head>\n<body>\n'
+		+ webpage + '\n</body>\n</html>'
+	/*
+	 * FM aka Vegetam Added the function that save the file in the directory
+	 * Downloads. Work only to Chrome Firefox And IE
+	 */
+			if (navigator.appName == "Microsoft Internet Explorer"
+			&& window.ActiveXObject) {
+		var locationFile = location.href.toString();
+		var dlg = false;
+		with (document) {
+			ir = createElement('iframe');
+			ir.id = 'ifr';
+			ir.location = 'about.blank';
+			ir.style.display = 'none';
+			body.appendChild(ir);
+			with (getElementById('ifr').contentWindow.document) {
+				open("text/html", "replace");
+				charset = "utf-8";
+				write(webpage);
+				close();
+				document.charset = "utf-8";
+				dlg = execCommand('SaveAs', false, locationFile
+						+ "webpage.html");
+			}
+			return dlg;
 		}
+	} else {
+		webpage = webpage;
+		var blob = new Blob([ webpage ], {
+			type : "text/html;charset=utf-8"
+		});
+		saveAs(blob, "webpage.html");
+	}
+}
